@@ -3,8 +3,6 @@ import "express-async-errors";
 import "reflect-metadata";
 import { router } from "./routes";
 
-import "./database";
-
 const app = express();
 
 app.use(express.json());
