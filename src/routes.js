@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { GetAccountRankController } from "./controllers/GetAccountRankController";
-import { GetWinrateByChampionController } from "./controllers/GetWinrateByChampionController";
+import { GetAccountRankController } from "./controllers/GetAccountRankController.js";
+import { GetChampionWinrateController } from "./controllers/GetChampionWinrateController.js";
 
 const router = Router();
 
 const getAccountRank = new GetAccountRankController();
-const getWinrateByChampion = new GetWinrateByChampionController();
+const getChampionWinrate = new GetChampionWinrateController();
 
 router.get("/get-account-rank", getAccountRank.handle);
-router.get("/get-winrate-by-champion", getWinrateByChampion.handle);
+router.get("/get-champion-winrate", getChampionWinrate.handle);
 
 export { router };
