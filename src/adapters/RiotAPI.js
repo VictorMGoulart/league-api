@@ -1,7 +1,6 @@
 import axios from "axios";
-import { getTimerInMinutes } from "../commons/get-timer-in-minutes.mjs";
-import { multikillMapper } from "../commons/multikill.mjs";
-import { RIOT_API_URL } from "../constants.mjs";
+import { getTimeInMinutes } from "../common/GetTimeInMinutes.js";
+import { multikillMapper } from "../common/MultikillMapper.js";
 
 const axiosConfig = {
     headers: {
@@ -15,7 +14,7 @@ export class RiotAPI {
     async getPUUID(username, tagline) {
         try {
             const responseUser = await axios.get(
-                `https://americas.${RIOT_API_URL}/riot/account/v1/accounts/by-riot-id/${username}/${tagline}`,
+                `https://americas.${process.env.RIOT_API_URL}/riot/account/v1/accounts/by-riot-id/${username}/${tagline}`,
                 axiosConfig
             );
 
@@ -29,7 +28,7 @@ export class RiotAPI {
     async getEncryptedSummonerID(puuid, region = "br1") {
         try {
             const responseUser = await axios.get(
-                `https://${region}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`,
+                `https://${region}.${process.env.RIOT_API_URL}/lol/league/v4/entries/by-puuid/${puuid}`,
                 axiosConfig
             );
 
@@ -47,7 +46,7 @@ export class RiotAPI {
             const {
                 data: [summonerStats],
             } = await axios.get(
-                `https://${region}.${RIOT_API_URL}/lol/league/v4/entries/by-puuid/${puuid}`,
+                `https://${region}.${process.env.RIOT_API_URL}/lol/league/v4/entries/by-puuid/${puuid}`,
                 axiosConfig
             );
 
@@ -56,6 +55,7 @@ export class RiotAPI {
             }
 
             const responseData = {
+                username,
                 wins: summonerStats.wins,
                 losses: summonerStats.losses,
                 winrate:
@@ -79,23 +79,27 @@ export class RiotAPI {
         }
     }
 
+    async getMatchHistory(puuid) {
+        const { data: matchHistory } = await axios.get(
+            `https://americas.${process.env.RIOT_API_URL}/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=100`,
+            axiosConfig
+        );
+
+        return matchHistory;
+    }
+
     async getLastMatchStats(username, tagline) {
         try {
             const puuid = await this.getPUUID(username, tagline);
 
-            const {
-                data: [lastGameID],
-            } = await axios.get(
-                `https://americas.${RIOT_API_URL}/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
-                axiosConfig
-            );
+            const lastGameID = await getMatchHistory(puuid)[0];
 
             if (!lastGameID || lastGameID?.status?.status_code) {
                 return;
             }
 
             const { data: gameStats } = await axios.get(
-                `https://americas.${RIOT_API_URL}/lol/match/v5/matches/${lastGameID}`,
+                `https://americas.${process.env.RIOT_API_URL}/lol/match/v5/matches/${lastGameID}`,
                 axiosConfig
             );
 
@@ -112,6 +116,7 @@ export class RiotAPI {
                 playerStats.totalMinionsKilled;
 
             const responseData = {
+                username,
                 kills: playerStats.kills,
                 deaths: playerStats.deaths,
                 assists: playerStats.assists,
@@ -119,7 +124,7 @@ export class RiotAPI {
                 champion: playerStats.championName,
                 largestMultikill: multikillMapper[playerStats.largestMultiKill],
                 creepScore: creepScore,
-                matchDuration: getTimerInMinutes(
+                matchDuration: getTimeInMinutes(
                     playerStats.challenges.gameLength
                 ),
                 enemyVisionPings: playerStats.enemyVisionPings,
@@ -131,4 +136,6 @@ export class RiotAPI {
             return;
         }
     }
+
+    async getWinrateOnChampion() {}
 }
