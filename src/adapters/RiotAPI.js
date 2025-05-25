@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getTimeInMinutes } from "../common/GetTimeInMinutes.js";
 import { multikillMapper } from "../common/MultikillMapper.js";
+import { calculateKDA } from "../common/CalculateKDA.js";
 
 const axiosConfig = {
     headers: {
@@ -92,7 +93,7 @@ export class RiotAPI {
         try {
             const puuid = await this.getPUUID(username, tagline);
 
-            const lastGameID = await getMatchHistory(puuid)[0];
+            const [lastGameID] = await this.getMatchHistory(puuid);
 
             if (!lastGameID || lastGameID?.status?.status_code) {
                 return;
@@ -120,7 +121,12 @@ export class RiotAPI {
                 kills: playerStats.kills,
                 deaths: playerStats.deaths,
                 assists: playerStats.assists,
-                result: playerStats.win ? "WIN" : "LOSE",
+                kda: calculateKDA(
+                    playerStats.kills,
+                    playerStats.deaths,
+                    playerStats.assists
+                ),
+                win: playerStats.win,
                 champion: playerStats.championName,
                 largestMultikill: multikillMapper[playerStats.largestMultiKill],
                 creepScore: creepScore,
