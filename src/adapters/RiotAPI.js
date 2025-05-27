@@ -134,6 +134,7 @@ export class RiotAPI {
                     playerStats.challenges.gameLength
                 ),
                 enemyVisionPings: playerStats.enemyVisionPings,
+                matchStartTimestamp: gameStats.info.gameStartTimestamp,
             };
 
             return responseData;
